@@ -163,6 +163,15 @@ export default function WorkerProfilePage() {
                 {isLoading ? <Skeleton width={140} /> : worker?.name}
               </Typography>
 
+              {/* Worker Code badge */}
+              {isLoading ? (
+                <Skeleton variant="rounded" width={80} height={20} sx={{ borderRadius: '20px', mb: 1.5 }} />
+              ) : worker ? (
+                <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary', fontWeight: 600, mb: 1.5, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08), px: 1, py: 0.25, borderRadius: 1 }}>
+                  {worker.workerCode}
+                </Typography>
+              ) : null}
+
               {/* Position badge */}
               {isLoading ? (
                 <Skeleton variant="rounded" width={80} height={26} sx={{ borderRadius: '20px' }} />

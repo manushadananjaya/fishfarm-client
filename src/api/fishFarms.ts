@@ -9,6 +9,9 @@ import type {
   UpdatePictureResponse,
 } from '../types';
 
+export type FarmSortField = 'name' | 'createdAt' | 'updatedAt' | 'numberOfCages' | 'workerCount';
+export type SortDir = 'asc' | 'desc';
+
 export interface ListFishFarmsParams {
   pageNumber?: number;
   pageSize?: number;
@@ -16,6 +19,8 @@ export interface ListFishFarmsParams {
   hasBarge?: boolean;
   minCages?: number;
   maxCages?: number;
+  sortBy?: FarmSortField;
+  sortDir?: SortDir;
 }
 
 export async function listFishFarms(

@@ -200,9 +200,16 @@ export default function FarmDetailPage() {
                     variant="h4"
                     fontWeight={700}
                     color="white"
-                    sx={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
+                    sx={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: 1.5 }}
                   >
                     {farm?.name}
+                    {farm && (
+                      <Chip
+                        label={farm.farmCode}
+                        size="small"
+                        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600, fontFamily: 'monospace' }}
+                      />
+                    )}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -337,112 +344,13 @@ export default function FarmDetailPage() {
       </Paper>
 
       {/* Main Content */}
-      <Grid container spacing={3}>
-        {/* Workers Section */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box>
-                <Typography variant="h6" fontWeight={700}>Workers</Typography>
-                {workersData && (
-                  <Typography variant="caption" color="text.secondary">
-                    {workersData.totalCount} team member{workersData.totalCount !== 1 ? 's' : ''}
-                  </Typography>
-                )}
-              </Box>
-              <Button variant="contained" startIcon={<PersonAddIcon />} onClick={openAddWorker} size="small">
-                Add Worker
-              </Button>
-            </Box>
-
-            {/* Worker Filters */}
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
-              <TextField
-                placeholder="Search name or email…"
-                value={workerSearch}
-                onChange={(e) => { setWorkerSearch(e.target.value); setWorkerPage(1); }}
-                size="small"
-                sx={{ flexGrow: 1, minWidth: 160 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" color="action" /></InputAdornment>,
-                  endAdornment: workerSearch ? (
-                    <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => { setWorkerSearch(''); setWorkerPage(1); }}>
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : null,
-                }}
-              />
-
-              <TextField
-                select
-                size="small"
-                value={workerPosition}
-                onChange={(e) => { setWorkerPosition(e.target.value as WorkerPosition | 'all'); setWorkerPage(1); }}
-                sx={{ minWidth: 110 }}
-                label="Position"
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="CEO">CEO</MenuItem>
-                <MenuItem value="Captain">Captain</MenuItem>
-                <MenuItem value="Worker">Worker</MenuItem>
-              </TextField>
-
-              <ToggleButtonGroup
-                value={certFilter}
-                exclusive
-                onChange={(_, v) => { if (v) { setCertFilter(v); setWorkerPage(1); } }}
-                size="small"
-              >
-                <ToggleButton value="all">All</ToggleButton>
-                <ToggleButton value="valid" sx={{ color: 'success.main' }}>Valid</ToggleButton>
-                <ToggleButton value="expired" sx={{ color: 'error.main' }}>Expired</ToggleButton>
-              </ToggleButtonGroup>
-
-              {(workerSearch || workerPosition !== 'all' || certFilter !== 'all') && (
-                <Tooltip title="Clear worker filters">
-                  <IconButton size="small" color="error" onClick={() => { setWorkerSearch(''); setWorkerPosition('all'); setCertFilter('all'); setWorkerPage(1); }}>
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
-
-            <Divider sx={{ mb: 2 }} />
-
-            <WorkerTable
-              workers={workersData?.items ?? []}
-              loading={workersLoading}
-              onEdit={openEditWorker}
-              onDelete={(w) => setDeleteWorkerDialog(w)}
-              farmId={id}
-            />
-
-            {/* Worker pagination */}
-            {workersData && workersData.totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mb={0.5}>
-                    Page {workersData.pageNumber} of {workersData.totalPages}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" disabled={!workersData.hasPreviousPage} onClick={() => setWorkerPage((p) => p - 1)} variant="outlined">Prev</Button>
-                    <Button size="small" disabled={!workersData.hasNextPage} onClick={() => setWorkerPage((p) => p + 1)} variant="outlined">Next</Button>
-                  </Box>
-                </Box>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Map & Info Sidebar */}
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Map & Info */}
+        <Grid item xs={12} md={6}>
           <Paper
             elevation={0}
             variant="outlined"
-            sx={{ p: 3, borderRadius: 3, mb: 3 }}
+            sx={{ p: 3, borderRadius: 3, height: '100%' }}
           >
             <Typography variant="h6" fontWeight={700} gutterBottom>
               Location
@@ -476,76 +384,185 @@ export default function FarmDetailPage() {
               </Box>
             )}
           </Paper>
+        </Grid>
 
-          {/* Worker breakdown — uses unfiltered farm.workers so totals are always correct */}
-          {farm && farm.workers.length > 0 && (
-            <Paper
-              elevation={0}
-              variant="outlined"
-              sx={{ p: 3, borderRadius: 3 }}
-            >
-              <Typography variant="h6" fontWeight={700} gutterBottom>
-                Team Breakdown
-              </Typography>
-              {(['CEO', 'Captain', 'Worker'] as const).map((pos) => {
-                const count = farm.workers.filter((w) => w.position === pos).length;
-                if (count === 0) return null;
-                return (
-                  <Box
-                    key={pos}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      py: 1,
-                      borderBottom: (theme) =>
-                        `1px solid ${theme.palette.divider}`,
-                      '&:last-child': { borderBottom: 'none' },
-                    }}
-                  >
+        {/* Worker breakdown */}
+        <Grid item xs={12} md={6}>
+          <Paper
+            elevation={0}
+            variant="outlined"
+            sx={{ p: 3, borderRadius: 3, height: '100%', display: 'flex', flexDirection: 'column' }}
+          >
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Team Breakdown
+            </Typography>
+            
+            {farm && farm.workers.length > 0 ? (
+              <Box>
+                {(['CEO', 'Captain', 'Worker'] as const).map((pos) => {
+                  const count = farm.workers.filter((w) => w.position === pos).length;
+                  if (count === 0) return null;
+                  return (
                     <Box
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      key={pos}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        py: 1,
+                        borderBottom: (theme) =>
+                          `1px solid ${theme.palette.divider}`,
+                        '&:last-child': { borderBottom: 'none' },
+                      }}
                     >
-                      <Avatar
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          fontSize: '0.75rem',
-                          bgcolor:
-                            pos === 'CEO'
-                              ? 'warning.main'
-                              : pos === 'Captain'
-                              ? 'primary.main'
-                              : 'success.main',
-                        }}
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       >
-                        {pos.charAt(0)}
-                      </Avatar>
-                      <Typography variant="body2" fontWeight={600}>
-                        {pos}
-                      </Typography>
+                        <Avatar
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            fontSize: '0.75rem',
+                            bgcolor:
+                              pos === 'CEO'
+                                ? 'warning.main'
+                                : pos === 'Captain'
+                                ? 'primary.main'
+                                : 'success.main',
+                          }}
+                        >
+                          {pos.charAt(0)}
+                        </Avatar>
+                        <Typography variant="body2" fontWeight={600}>
+                          {pos}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={count}
+                        size="small"
+                        variant="outlined"
+                      />
                     </Box>
-                    <Chip
-                      label={count}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-                );
-              })}
+                  );
+                })}
 
-              {/* Expired warning */}
-              {farm.workers.some((w) => w.isExpired) && (
-                <Alert severity="warning" sx={{ mt: 2 }} variant="outlined">
-                  {farm.workers.filter((w) => w.isExpired).length} worker
-                  {farm.workers.filter((w) => w.isExpired).length > 1 ? 's have' : ' has'}{' '}
-                  expired certification
-                </Alert>
-              )}
-            </Paper>
-          )}
+                {/* Expired warning */}
+                {farm.workers.some((w) => w.isExpired) && (
+                  <Alert severity="warning" sx={{ mt: 2 }} variant="outlined">
+                    {farm.workers.filter((w) => w.isExpired).length} worker
+                    {farm.workers.filter((w) => w.isExpired).length > 1 ? 's have' : ' has'}{' '}
+                    expired certification
+                  </Alert>
+                )}
+              </Box>
+            ) : (
+              <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4, textAlign: 'center' }}>
+                <GroupIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1, opacity: 0.5 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Add workers to see the team breakdown
+                </Typography>
+              </Box>
+            )}
+          </Paper>
         </Grid>
       </Grid>
+
+      {/* Workers Section */}
+      <Paper elevation={0} variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 3 }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>Workers</Typography>
+            {workersData && (
+              <Typography variant="caption" color="text.secondary">
+                {workersData.totalCount} team member{workersData.totalCount !== 1 ? 's' : ''}
+              </Typography>
+            )}
+          </Box>
+          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={openAddWorker} size="small">
+            Add Worker
+          </Button>
+        </Box>
+
+        {/* Worker Filters */}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search name or email…"
+            value={workerSearch}
+            onChange={(e) => { setWorkerSearch(e.target.value); setWorkerPage(1); }}
+            size="small"
+            sx={{ flexGrow: 1, minWidth: 160 }}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" color="action" /></InputAdornment>,
+              endAdornment: workerSearch ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => { setWorkerSearch(''); setWorkerPage(1); }}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            }}
+          />
+
+          <TextField
+            select
+            size="small"
+            value={workerPosition}
+            onChange={(e) => { setWorkerPosition(e.target.value as WorkerPosition | 'all'); setWorkerPage(1); }}
+            sx={{ minWidth: 110 }}
+            label="Position"
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="CEO">CEO</MenuItem>
+            <MenuItem value="Captain">Captain</MenuItem>
+            <MenuItem value="Worker">Worker</MenuItem>
+          </TextField>
+
+          <ToggleButtonGroup
+            value={certFilter}
+            exclusive
+            onChange={(_, v) => { if (v) { setCertFilter(v); setWorkerPage(1); } }}
+            size="small"
+          >
+            <ToggleButton value="all">All</ToggleButton>
+            <ToggleButton value="valid" sx={{ color: 'success.main' }}>Valid</ToggleButton>
+            <ToggleButton value="expired" sx={{ color: 'error.main' }}>Expired</ToggleButton>
+          </ToggleButtonGroup>
+
+          {(workerSearch || workerPosition !== 'all' || certFilter !== 'all') && (
+            <Tooltip title="Clear worker filters">
+              <IconButton size="small" color="error" onClick={() => { setWorkerSearch(''); setWorkerPosition('all'); setCertFilter('all'); setWorkerPage(1); }}>
+                <ClearIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+
+        <Divider sx={{ mb: 2 }} />
+
+        <WorkerTable
+          workers={workersData?.items ?? []}
+          loading={workersLoading}
+          onEdit={openEditWorker}
+          onDelete={(w) => setDeleteWorkerDialog(w)}
+          farmId={id}
+        />
+
+        {/* Worker pagination */}
+        {workersData && workersData.totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mb={0.5}>
+                Page {workersData.pageNumber} of {workersData.totalPages}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button size="small" disabled={!workersData.hasPreviousPage} onClick={() => setWorkerPage((p) => p - 1)} variant="outlined">Prev</Button>
+                <Button size="small" disabled={!workersData.hasNextPage} onClick={() => setWorkerPage((p) => p + 1)} variant="outlined">Next</Button>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </Paper>
 
       {/* Floating Add Worker Button (mobile) */}
       <Fab

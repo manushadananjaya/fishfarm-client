@@ -116,15 +116,6 @@ export default function EditFarmPage() {
 
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          component={Link}
-          to={`/farms/${id}`}
-          startIcon={<ArrowBackIcon />}
-          variant="outlined"
-          size="small"
-        >
-          Back
-        </Button>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <EditIcon color="primary" sx={{ fontSize: 28 }} />
           <Box>

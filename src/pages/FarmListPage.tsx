@@ -16,6 +16,8 @@ import {
   IconButton,
   Tooltip,
   Divider,
+  MenuItem,
+  Stack,
 } from '@mui/material';
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import SearchIcon from '@mui/icons-material/Search';
@@ -24,14 +26,30 @@ import FishingIcon from '@mui/icons-material/Phishing';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import SortIcon from '@mui/icons-material/Sort';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useFishFarms } from '../hooks/useFishFarms';
 import FarmCard, { FarmCardSkeleton } from '../components/farms/FarmCard';
+import FarmListItem from '../components/farms/FarmListItem';
 import PaginationBar from '../components/common/PaginationBar';
 import { useDebounce } from '../hooks/useDebounce';
+import type { FarmSortField, SortDir } from '../api/fishFarms';
 
 const PAGE_SIZE = 9;
 
 type BargeFilter = 'all' | 'true' | 'false';
+type ViewMode = 'grid' | 'list';
+
+const SORT_OPTIONS: { value: FarmSortField; label: string }[] = [
+  { value: 'createdAt', label: 'Date Added' },
+  { value: 'updatedAt', label: 'Last Updated' },
+  { value: 'name', label: 'Name' },
+  { value: 'numberOfCages', label: 'Number of Cages' },
+  { value: 'workerCount', label: 'Workers' },
+];
 
 export default function FarmListPage() {
   const navigate = useNavigate();
@@ -42,8 +60,10 @@ export default function FarmListPage() {
   const [minCages, setMinCages] = useState('');
   const [maxCages, setMaxCages] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [sortField, setSortField] = useState<FarmSortField>('createdAt');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // Debounce search + cage inputs so we don't fire on every keystroke
   const debouncedSearch = useDebounce(searchInput, 350);
   const debouncedMinCages = useDebounce(minCages, 500);
   const debouncedMaxCages = useDebounce(maxCages, 500);
@@ -51,6 +71,8 @@ export default function FarmListPage() {
   const queryParams = {
     pageNumber: page,
     pageSize: PAGE_SIZE,
+    sortBy: sortField,
+    sortDir,
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(bargeFilter !== 'all' ? { hasBarge: bargeFilter === 'true' } : {}),
     ...(debouncedMinCages && Number(debouncedMinCages) > 0
@@ -62,6 +84,7 @@ export default function FarmListPage() {
   };
 
   const { data, isLoading, isError, error } = useFishFarms(queryParams);
+  const items = data?.items ?? [];
 
   const activeFilterCount =
     (debouncedSearch ? 1 : 0) +
@@ -84,6 +107,16 @@ export default function FarmListPage() {
 
   const handleBargeChange = (_: unknown, val: BargeFilter | null) => {
     setBargeFilter(val ?? 'all');
+    setPage(1);
+  };
+
+  const handleSortFieldChange = (field: FarmSortField) => {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
     setPage(1);
   };
 
@@ -147,7 +180,7 @@ export default function FarmListPage() {
           boxShadow: '0 1px 6px rgba(0,61,122,0.06)',
         }}
       >
-        {/* Top row: search + filter toggle */}
+        {/* Top row: search + sort + view toggle + filter toggle */}
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search farms by name…"
@@ -170,6 +203,57 @@ export default function FarmListPage() {
               ) : null,
             }}
           />
+
+          {/* Sort dropdown + direction toggle */}
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <SortIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <TextField
+              select
+              size="small"
+              value={sortField}
+              onChange={(e) => handleSortFieldChange(e.target.value as FarmSortField)}
+              sx={{ minWidth: 150 }}
+              InputProps={{ sx: { fontSize: '0.85rem' } }}
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Tooltip title={sortDir === 'asc' ? 'Ascending — click to reverse' : 'Descending — click to reverse'}>
+              <IconButton
+                size="small"
+                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                color="primary"
+              >
+                {sortDir === 'asc' ? (
+                  <ArrowUpwardIcon fontSize="small" />
+                ) : (
+                  <ArrowDownwardIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          {/* View mode toggle */}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, v) => v && setViewMode(v)}
+            size="small"
+          >
+            <ToggleButton value="grid" aria-label="Grid view">
+              <Tooltip title="Grid view">
+                <GridViewIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="list" aria-label="List view">
+              <Tooltip title="List view">
+                <ViewListIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
 
           <Tooltip title={showFilters ? 'Hide filters' : 'Show filters'}>
             <Button
@@ -290,20 +374,59 @@ export default function FarmListPage() {
         </Box>
       )}
 
-      {/* Farm Grid */}
-      <Grid container spacing={3}>
-        {isLoading
-          ? [...Array(PAGE_SIZE)].map((_, i) => (
-              <Grid item xs={12} sm={6} lg={4} key={i}>
-                <FarmCardSkeleton />
-              </Grid>
-            ))
-          : (data?.items ?? []).map((farm) => (
-              <Grid item xs={12} sm={6} lg={4} key={farm.id}>
-                <FarmCard farm={farm} />
-              </Grid>
-            ))}
-      </Grid>
+      {/* Grid view */}
+      {viewMode === 'grid' && (
+        <Grid container spacing={3}>
+          {isLoading
+            ? [...Array(PAGE_SIZE)].map((_, i) => (
+                <Grid item xs={12} sm={6} lg={4} key={i}>
+                  <FarmCardSkeleton />
+                </Grid>
+              ))
+            : items.map((farm) => (
+                <Grid item xs={12} sm={6} lg={4} key={farm.id}>
+                  <FarmCard farm={farm} />
+                </Grid>
+              ))}
+        </Grid>
+      )}
+
+      {/* List view */}
+      {viewMode === 'list' && (
+        <Stack spacing={1}>
+          {isLoading
+            ? [...Array(PAGE_SIZE)].map((_, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    height: 100,
+                    borderRadius: 2.5,
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                    bgcolor: 'background.paper',
+                    display: 'flex',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box sx={{ width: 120, height: '100%', bgcolor: 'action.hover', flexShrink: 0 }} />
+                  <Box sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <Box sx={{ height: 18, width: '45%', bgcolor: 'action.hover', borderRadius: 1 }} />
+                    <Box sx={{ height: 13, width: '60%', bgcolor: 'action.hover', borderRadius: 1 }} />
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={{ height: 22, width: 80, bgcolor: 'action.hover', borderRadius: '20px' }} />
+                      <Box sx={{ height: 22, width: 80, bgcolor: 'action.hover', borderRadius: '20px' }} />
+                    </Box>
+                  </Box>
+                  <Box sx={{ width: 160, borderLeft: (theme) => `1px solid ${theme.palette.divider}`, p: 2, display: { xs: 'none', sm: 'flex' }, flexDirection: 'column', gap: 1, justifyContent: 'center' }}>
+                    <Box sx={{ height: 12, width: '60%', bgcolor: 'action.hover', borderRadius: 1 }} />
+                    <Box sx={{ height: 12, width: '80%', bgcolor: 'action.hover', borderRadius: 1 }} />
+                  </Box>
+                </Box>
+              ))
+            : items.map((farm) => (
+                <FarmListItem key={farm.id} farm={farm} />
+              ))}
+        </Stack>
+      )}
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (

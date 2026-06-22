@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Box, Paper, Typography, Button, Breadcrumbs } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import HomeIcon from '@mui/icons-material/Home';
@@ -68,15 +67,6 @@ export default function CreateFarmPage() {
 
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Button
-          component={Link}
-          to="/"
-          startIcon={<ArrowBackIcon />}
-          variant="outlined"
-          size="small"
-        >
-          Back
-        </Button>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AddBusinessIcon color="primary" sx={{ fontSize: 28 }} />
           <Box>

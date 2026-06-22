@@ -16,8 +16,9 @@ import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import GroupIcon from '@mui/icons-material/Group';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import GridViewIcon from '@mui/icons-material/GridView';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import type { FishFarmSummary } from '../../types';
-import { formatGps } from '../../utils/formatters';
+import { formatGps, formatDate } from '../../utils/formatters';
 
 interface FarmCardProps {
   farm: FishFarmSummary;
@@ -93,6 +94,25 @@ export default function FarmCard({ farm }: FarmCardProps) {
               }}
             />
           )}
+
+          {/* Farm Code badge */}
+          {farm.farmCode && (
+            <Chip
+              label={farm.farmCode}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                bgcolor: 'rgba(255,255,255,0.85)',
+                color: 'primary.main',
+                fontWeight: 800,
+                fontFamily: 'monospace',
+                backdropFilter: 'blur(4px)',
+                border: '1px solid rgba(255,255,255,0.4)',
+              }}
+            />
+          )}
         </Box>
 
         <CardContent sx={{ flexGrow: 1, pb: '12px !important' }}>
@@ -107,7 +127,7 @@ export default function FarmCard({ farm }: FarmCardProps) {
           </Box>
 
           {/* Stats row */}
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
             <Chip
               icon={<GridViewIcon sx={{ fontSize: '14px !important' }} />}
               label={`${farm.numberOfCages} cages`}
@@ -120,12 +140,7 @@ export default function FarmCard({ farm }: FarmCardProps) {
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
               <Avatar
-                sx={{
-                  width: 22,
-                  height: 22,
-                  bgcolor: 'primary.main',
-                  fontSize: '0.7rem',
-                }}
+                sx={{ width: 22, height: 22, bgcolor: 'primary.main', fontSize: '0.7rem' }}
               >
                 <GroupIcon sx={{ fontSize: 14 }} />
               </Avatar>
@@ -133,6 +148,14 @@ export default function FarmCard({ farm }: FarmCardProps) {
                 {farm.workerCount} worker{farm.workerCount !== 1 ? 's' : ''}
               </Typography>
             </Box>
+          </Box>
+
+          {/* Date row */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <CalendarTodayIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+            <Typography variant="caption" color="text.disabled">
+              Added {formatDate(farm.createdAt)}
+            </Typography>
           </Box>
         </CardContent>
       </CardActionArea>

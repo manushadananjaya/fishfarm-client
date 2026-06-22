@@ -12,6 +12,7 @@ export interface PaginatedResult<T> {
 
 export interface FishFarmSummary {
   id: string;
+  farmCode: string;
   name: string;
   gpsLatitude: number;
   gpsLongitude: number;
@@ -19,10 +20,13 @@ export interface FishFarmSummary {
   hasBarge: boolean;
   pictureUrl: string | null;
   workerCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface FishFarm {
   id: string;
+  farmCode: string;
   name: string;
   gpsLatitude: number;
   gpsLongitude: number;
@@ -36,6 +40,7 @@ export interface FishFarm {
 
 export interface Worker {
   id: string;
+  workerCode: string;
   fishFarmId: string;
   name: string;
   age: number;

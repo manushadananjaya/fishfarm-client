@@ -58,6 +58,7 @@ export default function WorkerTable({
                 <TableCell><Skeleton variant="text" width={30} /></TableCell>
                 <TableCell><Skeleton variant="text" width="90%" /></TableCell>
                 <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                <TableCell><Skeleton variant="text" width={80} /></TableCell>
                 <TableCell><Skeleton variant="rounded" width={80} height={24} /></TableCell>
                 {!readOnly && <TableCell />}
               </TableRow>
@@ -145,6 +146,13 @@ export default function WorkerTable({
                     />
                   )}
                 </Box>
+              </TableCell>
+
+              {/* Code */}
+              <TableCell>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.secondary' }}>
+                  {worker.workerCode}
+                </Typography>
               </TableCell>
 
               {/* Position */}
@@ -237,6 +245,7 @@ function WorkerTableHead({ showActions }: { showActions: boolean }) {
     <TableRow>
       <TableCell />
       <TableCell>Name</TableCell>
+      <TableCell>ID</TableCell>
       <TableCell>Position</TableCell>
       <TableCell>Age</TableCell>
       <TableCell>Email</TableCell>
