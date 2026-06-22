@@ -157,15 +157,15 @@ export default function FarmListPage() {
               />
             )}
           </Box>
-          <Button
+          {/* <Button
             variant="contained"
             startIcon={<AddBusinessIcon />}
             onClick={() => navigate('/farms/new')}
             size="large"
-            sx={{ bgcolor: 'white', color: 'primary.dark', fontWeight: 700, '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
+            sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 700, backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.3)', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}
           >
             Register New Farm
-          </Button>
+          </Button> */}
         </Box>
       </Box>
 
