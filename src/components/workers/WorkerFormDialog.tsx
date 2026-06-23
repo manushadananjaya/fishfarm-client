@@ -95,7 +95,9 @@ export default function WorkerFormDialog({
           age: worker.age,
           email: worker.email,
           position: worker.position,
-          certifiedUntil: worker.certifiedUntil,
+          // If expired, clear the date so the field opens blank.
+          // The warning alert explains they must enter a future date.
+          certifiedUntil: worker.isExpired ? '' : worker.certifiedUntil,
           picture: undefined,
         });
       } else {
@@ -193,8 +195,8 @@ export default function WorkerFormDialog({
 
         {showExpiredWarning && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            This worker's certification has expired. You must set a future
-            "Certified Until" date to save changes.
+            This worker&apos;s certification has expired. Enter a new future date
+            in the <strong>Certified Until</strong> field to renew it.
           </Alert>
         )}
 

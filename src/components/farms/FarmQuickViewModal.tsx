@@ -74,13 +74,20 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
       PaperProps={{
         sx: {
           borderRadius: 3,
-          overflow: 'hidden',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+          overflow: "hidden",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
         },
       }}
     >
       {/* Hero image */}
-      <Box sx={{ position: 'relative', height: 220, overflow: 'hidden', flexShrink: 0 }}>
+      <Box
+        sx={{
+          position: "relative",
+          height: 220,
+          overflow: "hidden",
+          flexShrink: 0,
+        }}
+      >
         {isLoading ? (
           <Skeleton variant="rectangular" width="100%" height={220} />
         ) : (
@@ -89,33 +96,75 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
               component="img"
               src={farm?.pictureUrl ?? FARM_PLACEHOLDER}
               alt={farm?.name}
-              sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
             {/* Dark gradient for text legibility */}
-            <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,20,60,0.82) 0%, rgba(0,20,60,0.15) 55%, transparent 100%)' }} />
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(to top, rgba(0,20,60,0.82) 0%, rgba(0,20,60,0.15) 55%, transparent 100%)",
+              }}
+            />
 
             {/* Farm name + code over image */}
-            <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, p: 2.5 }}>
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                p: 2.5,
+              }}
+            >
               {/* Farm code badge */}
               <Box
                 sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  display: "inline-flex",
+                  alignItems: "center",
                   px: 1,
                   py: 0.3,
-                  borderRadius: '6px',
-                  bgcolor: 'rgba(255,255,255,0.18)',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  backdropFilter: 'blur(4px)',
+                  borderRadius: "6px",
+                  bgcolor: "rgba(255,255,255,0.18)",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  backdropFilter: "blur(4px)",
                   mb: 0.75,
                 }}
               >
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', color: 'white' }}>
-                  {isLoading ? '——' : (farm as unknown as { farmCode?: string })?.farmCode ?? ''}
+                <Typography
+                  sx={{
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "white",
+                  }}
+                >
+                  {isLoading ? "——" : (farm?.farmCode ?? "")}
                 </Typography>
               </Box>
-              <Typography variant="h6" fontWeight={800} color="white" sx={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)', lineHeight: 1.2 }}>
-                {isLoading ? <Skeleton width="60%" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} /> : farm?.name}
+              <Typography
+                variant="h6"
+                fontWeight={800}
+                color="white"
+                sx={{
+                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                  lineHeight: 1.2,
+                }}
+              >
+                {isLoading ? (
+                  <Skeleton
+                    width="60%"
+                    sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+                  />
+                ) : (
+                  farm?.name
+                )}
               </Typography>
             </Box>
           </>
@@ -126,13 +175,13 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
           onClick={onClose}
           size="small"
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 10,
             right: 10,
-            bgcolor: 'rgba(0,0,0,0.45)',
-            color: 'white',
-            backdropFilter: 'blur(4px)',
-            '&:hover': { bgcolor: 'rgba(0,0,0,0.65)' },
+            bgcolor: "rgba(0,0,0,0.45)",
+            color: "white",
+            backdropFilter: "blur(4px)",
+            "&:hover": { bgcolor: "rgba(0,0,0,0.65)" },
           }}
         >
           <CloseIcon fontSize="small" />
@@ -143,9 +192,12 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
       <DialogContent sx={{ p: 0 }}>
         <Box sx={{ px: 3, py: 2 }}>
           {isLoading ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {[...Array(5)].map((_, i) => (
-                <Box key={i} sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                <Box
+                  key={i}
+                  sx={{ display: "flex", gap: 1.5, alignItems: "center" }}
+                >
                   <Skeleton variant="circular" width={20} height={20} />
                   <Box sx={{ flex: 1 }}>
                     <Skeleton variant="text" width="30%" height={12} />
@@ -161,7 +213,11 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
                 icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
                 label="GPS Position"
                 value={
-                  <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ fontFamily: "monospace" }}
+                  >
                     {formatGps(farm.gpsLatitude, farm.gpsLongitude)}
                   </Typography>
                 }
@@ -169,11 +225,11 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
               <Divider />
 
               {/* Cages + barge in a two-col layout */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                 <StatRow
                   icon={<GridViewIcon sx={{ fontSize: 18 }} />}
                   label="Number of Cages"
-                  value={`${farm.numberOfCages} cage${farm.numberOfCages !== 1 ? 's' : ''}`}
+                  value={`${farm.numberOfCages} cage${farm.numberOfCages !== 1 ? "s" : ""}`}
                 />
                 <StatRow
                   icon={<DirectionsBoatIcon sx={{ fontSize: 18 }} />}
@@ -182,21 +238,21 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
                     <Box
                       component="span"
                       sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
+                        display: "inline-flex",
+                        alignItems: "center",
                         gap: 0.4,
                         px: 0.9,
                         py: 0.2,
-                        borderRadius: '5px',
-                        fontSize: '0.78rem',
+                        borderRadius: "5px",
+                        fontSize: "0.78rem",
                         fontWeight: 700,
                         bgcolor: farm.hasBarge
                           ? (theme) => alpha(theme.palette.primary.main, 0.1)
                           : (theme) => alpha(theme.palette.text.disabled, 0.08),
-                        color: farm.hasBarge ? 'primary.main' : 'text.disabled',
+                        color: farm.hasBarge ? "primary.main" : "text.disabled",
                       }}
                     >
-                      {farm.hasBarge ? '⚓ Has Barge' : 'No Barge'}
+                      {farm.hasBarge ? "⚓ Has Barge" : "No Barge"}
                     </Box>
                   }
                 />
@@ -206,12 +262,12 @@ export default function FarmQuickViewModal({ farmId, onClose }: FarmQuickViewMod
               <StatRow
                 icon={<GroupIcon sx={{ fontSize: 18 }} />}
                 label="Workers"
-                value={`${farm.workers.length} worker${farm.workers.length !== 1 ? 's' : ''}`}
+                value={`${farm.workers.length} worker${farm.workers.length !== 1 ? "s" : ""}`}
               />
               <Divider />
 
               {/* Dates */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                 <StatRow
                   icon={<CalendarTodayIcon sx={{ fontSize: 18 }} />}
                   label="Registered"

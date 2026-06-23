@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { FishFarmMapDto } from '../../types';
@@ -127,6 +127,30 @@ function ViewportTracker({
   return null;
 }
 
+// ── FlyTo controller — exposes imperative flyTo via ref ────────────────────
+
+export interface FarmsOverviewMapHandle {
+  flyTo: (lat: number, lng: number, zoom?: number) => void;
+}
+
+function FlyToController({
+  handle,
+}: {
+  handle: React.MutableRefObject<FarmsOverviewMapHandle | null>;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    handle.current = {
+      flyTo: (lat, lng, zoom = 10) => {
+        map.flyTo([lat, lng], zoom, { duration: 1.1 });
+      },
+    };
+  }, [map, handle]);
+
+  return null;
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 interface FarmsOverviewMapProps {
@@ -138,45 +162,54 @@ interface FarmsOverviewMapProps {
   onVisibleChange?: (visibleIds: Set<string>) => void;
 }
 
-export default function FarmsOverviewMap({
-  farms,
-  fitTrigger = 0,
-  highlightedId = null,
-  onMarkerClick,
-  onVisibleChange,
-}: FarmsOverviewMapProps) {
-  const handleVisible = useCallback(
-    (ids: Set<string>) => { onVisibleChange?.(ids); },
-    [onVisibleChange],
-  );
+const FarmsOverviewMap = forwardRef<FarmsOverviewMapHandle, FarmsOverviewMapProps>(
+  function FarmsOverviewMap(
+    { farms, fitTrigger = 0, highlightedId = null, onMarkerClick, onVisibleChange },
+    ref,
+  ) {
+    const handleRef = useRef<FarmsOverviewMapHandle | null>(null);
 
-  return (
-    <MapContainer
-      center={NORWAY_CENTER}
-      zoom={NORWAY_ZOOM}
-      style={{ height: '100%', width: '100%' }}
-      scrollWheelZoom
-      zoomControl
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    // Forward the imperative handle to the parent
+    useImperativeHandle(ref, () => ({
+      flyTo: (lat, lng, zoom) => handleRef.current?.flyTo(lat, lng, zoom),
+    }));
 
-      {farms.map((farm) => (
-        <Marker
-          key={farm.id}
-          position={[farm.gpsLatitude, farm.gpsLongitude]}
-          icon={createFarmIcon(farm.farmCode, farm.id === highlightedId)}
-          eventHandlers={{
-            click: () => onMarkerClick?.(farm.id),
-          }}
+    const handleVisible = useCallback(
+      (ids: Set<string>) => { onVisibleChange?.(ids); },
+      [onVisibleChange],
+    );
+
+    return (
+      <MapContainer
+        center={NORWAY_CENTER}
+        zoom={NORWAY_ZOOM}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom
+        zoomControl
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-      ))}
 
-      <FitBoundsOnLoad farms={farms} />
-      <FitAllOnTrigger farms={farms} trigger={fitTrigger} />
-      <ViewportTracker farms={farms} onVisibleChange={handleVisible} />
-    </MapContainer>
-  );
-}
+        {farms.map((farm) => (
+          <Marker
+            key={farm.id}
+            position={[farm.gpsLatitude, farm.gpsLongitude]}
+            icon={createFarmIcon(farm.farmCode, farm.id === highlightedId)}
+            eventHandlers={{
+              click: () => onMarkerClick?.(farm.id),
+            }}
+          />
+        ))}
+
+        <FitBoundsOnLoad farms={farms} />
+        <FitAllOnTrigger farms={farms} trigger={fitTrigger} />
+        <ViewportTracker farms={farms} onVisibleChange={handleVisible} />
+        <FlyToController handle={handleRef} />
+      </MapContainer>
+    );
+  },
+);
+
+export default FarmsOverviewMap;

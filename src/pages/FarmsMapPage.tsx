@@ -1,5 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -27,8 +26,8 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import GridViewIcon from '@mui/icons-material/GridView';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import GroupIcon from '@mui/icons-material/Group';
-import { useFishFarmsMap, useFishFarms } from '../hooks/useFishFarms';
-import FarmsOverviewMap from '../components/farms/FarmsOverviewMap';
+import { useFishFarmsMap, useAllFishFarms } from '../hooks/useFishFarms';
+import FarmsOverviewMap, { type FarmsOverviewMapHandle } from '../components/farms/FarmsOverviewMap';
 import FarmQuickViewModal from '../components/farms/FarmQuickViewModal';
 import type { FishFarmSummary } from '../types';
 
@@ -44,14 +43,12 @@ const glassBase = {
 };
 
 export default function FarmsMapPage() {
-  const navigate = useNavigate();
-
   // Map markers (GPS-optimised endpoint)
   const { data: mapFarms = [], isLoading: mapLoading, isError: mapError } = useFishFarmsMap();
 
-  // List data for sidebar (includes pictureUrl, cage count, etc.)
-  const { data: listData, isLoading: listLoading } = useFishFarms({
-    pageSize: 50,
+  // Complete farm list for sidebar — all pages fetched and merged.
+  // Sorted by name so the sidebar list is stable regardless of total count.
+  const { data: allFarms = [], isLoading: listLoading } = useAllFishFarms({
     sortBy: 'name',
     sortDir: 'asc',
   });
@@ -62,15 +59,12 @@ export default function FarmsMapPage() {
     [mapFarms],
   );
   const sidebarFarms: (FishFarmSummary & { farmCode: string })[] = useMemo(
-    () =>
-      (listData?.items ?? []).map((f) => ({
-        ...f,
-        farmCode: farmCodeById.get(f.id) ?? '',
-      })),
-    [listData, farmCodeById],
+    () => allFarms.map((f) => ({ ...f, farmCode: farmCodeById.get(f.id) ?? '' })),
+    [allFarms, farmCodeById],
   );
 
   // UI state
+  const mapRef = useRef<FarmsOverviewMapHandle>(null);
   const [selectedFarmId, setSelectedFarmId]   = useState<string | null>(null);
   const [highlightedId, setHighlightedId]     = useState<string | null>(null);
   const [visibleIds, setVisibleIds]           = useState<Set<string>>(new Set());
@@ -79,6 +73,20 @@ export default function FarmsMapPage() {
   const [mobileOpen, setMobileOpen]           = useState(false);
 
   const handleVisibleChange = useCallback((ids: Set<string>) => setVisibleIds(ids), []);
+
+  /** Sidebar row click: fly map to that farm, highlight marker, open modal */
+  const handleSidebarSelect = useCallback(
+    (id: string) => {
+      const mapFarm = mapFarms.find((f) => f.id === id);
+      if (mapFarm) {
+        mapRef.current?.flyTo(mapFarm.gpsLatitude, mapFarm.gpsLongitude, 10);
+      }
+      setHighlightedId(id);
+      setSelectedFarmId(id);
+      setMobileOpen(false);
+    },
+    [mapFarms],
+  );
 
   const filteredSidebar = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -103,6 +111,7 @@ export default function FarmsMapPage() {
       {/* ── Full-screen Leaflet map ─────────────────────────────────────── */}
       <Box sx={{ position: 'absolute', inset: 0 }}>
         <FarmsOverviewMap
+          ref={mapRef}
           farms={mapFarms}
           fitTrigger={fitTrigger}
           highlightedId={highlightedId}
@@ -238,7 +247,7 @@ export default function FarmsMapPage() {
           onSearchChange={setSearch}
           highlightedId={highlightedId}
           onHover={setHighlightedId}
-          onSelect={(id) => navigate(`/farms/${id}`)}
+          onSelect={handleSidebarSelect}
         />
       </Paper>
 
@@ -326,10 +335,7 @@ export default function FarmsMapPage() {
             loading={sidebarLoading}
             highlightedId={highlightedId}
             onHover={setHighlightedId}
-            onSelect={(id) => {
-              setMobileOpen(false);
-              navigate(`/farms/${id}`);
-            }}
+            onSelect={handleSidebarSelect}
           />
         </Box>
 
