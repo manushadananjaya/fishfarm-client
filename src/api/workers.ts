@@ -1,14 +1,13 @@
 import { apiClient } from './client';
 import type {
   PaginatedResult,
-  Worker,
-  CreateWorkerBody,
-  UpdateWorkerBody,
+  FarmWorkerDto,
+  AssignPersonToFarmRequest,
+  UpdateFarmWorkerRequest,
   CreateIdResponse,
-  UpdatePictureResponse,
 } from '../types';
 
-export interface ListWorkersParams {
+export interface ListFarmWorkersParams {
   pageNumber?: number;
   pageSize?: number;
   search?: string;
@@ -16,80 +15,54 @@ export interface ListWorkersParams {
   certExpired?: boolean;
 }
 
-export async function listWorkers(
+export async function listFarmWorkers(
   fishFarmId: string,
-  params: ListWorkersParams = {},
-): Promise<PaginatedResult<Worker>> {
-  const { data } = await apiClient.get<PaginatedResult<Worker>>(
+  params: ListFarmWorkersParams = {},
+): Promise<PaginatedResult<FarmWorkerDto>> {
+  const { data } = await apiClient.get<PaginatedResult<FarmWorkerDto>>(
     `/api/fishfarms/${fishFarmId}/workers`,
     { params },
   );
   return data;
 }
 
-export async function getWorker(
+export async function getFarmWorker(
   fishFarmId: string,
-  workerId: string,
-): Promise<Worker> {
-  const { data } = await apiClient.get<Worker>(
-    `/api/fishfarms/${fishFarmId}/workers/${workerId}`,
+  farmWorkerId: string,
+): Promise<FarmWorkerDto> {
+  const { data } = await apiClient.get<FarmWorkerDto>(
+    `/api/fishfarms/${fishFarmId}/workers/${farmWorkerId}`,
   );
   return data;
 }
 
-export async function createWorker(
+export async function assignPersonToFarm(
   fishFarmId: string,
-  body: CreateWorkerBody,
+  body: AssignPersonToFarmRequest,
 ): Promise<CreateIdResponse> {
-  const form = new FormData();
-  form.append('Name', body.name);
-  form.append('Age', String(body.age));
-  form.append('Email', body.email);
-  form.append('Position', body.position);
-  form.append('CertifiedUntil', body.certifiedUntil);
-  if (body.picture) form.append('Picture', body.picture);
-
   const { data } = await apiClient.post<CreateIdResponse>(
     `/api/fishfarms/${fishFarmId}/workers`,
-    form,
+    body,
   );
   return data;
 }
 
-export async function updateWorker(
+export async function updateFarmWorkerRole(
   fishFarmId: string,
-  workerId: string,
-  body: UpdateWorkerBody,
+  farmWorkerId: string,
+  body: UpdateFarmWorkerRequest,
 ): Promise<void> {
-  await apiClient.put(`/api/fishfarms/${fishFarmId}/workers/${workerId}`, body);
-}
-
-export async function updateWorkerPicture(
-  fishFarmId: string,
-  workerId: string,
-  picture: File,
-): Promise<UpdatePictureResponse> {
-  const form = new FormData();
-  form.append('Picture', picture);
-  const { data } = await apiClient.patch<UpdatePictureResponse>(
-    `/api/fishfarms/${fishFarmId}/workers/${workerId}/picture`,
-    form,
+  await apiClient.put(
+    `/api/fishfarms/${fishFarmId}/workers/${farmWorkerId}`,
+    body,
   );
-  return data;
 }
 
-export async function deleteWorker(
+export async function removeFarmWorker(
   fishFarmId: string,
-  workerId: string,
-): Promise<void> {
-  await apiClient.delete(`/api/fishfarms/${fishFarmId}/workers/${workerId}`);
-}
-
-export async function deleteWorkerPicture(
-  fishFarmId: string,
-  workerId: string,
+  farmWorkerId: string,
 ): Promise<void> {
   await apiClient.delete(
-    `/api/fishfarms/${fishFarmId}/workers/${workerId}/picture`,
+    `/api/fishfarms/${fishFarmId}/workers/${farmWorkerId}`,
   );
 }

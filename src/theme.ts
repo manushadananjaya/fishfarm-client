@@ -69,10 +69,19 @@ const theme = createTheme({
           boxShadow: 'none',
           '&:hover': { boxShadow: 'none' },
         },
+        contained: {
+          '&.Mui-disabled': {
+            color: '#ffffff',
+          },
+        },
         containedPrimary: {
           background: 'linear-gradient(135deg, #003D7A 0%, #1565C0 100%)',
           '&:hover': {
             background: 'linear-gradient(135deg, #002756 0%, #003D7A 100%)',
+          },
+          '&.Mui-disabled': {
+            background: 'linear-gradient(135deg, #003D7A 0%, #1565C0 100%)',
+            opacity: 0.6,
           },
         },
       },

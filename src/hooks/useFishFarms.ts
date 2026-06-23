@@ -87,29 +87,21 @@ export function useDeleteFishFarmPicture(id: string) {
   });
 }
 
-/**
- * Fetches every page of the farm list and returns a single merged array.
- * Uses the server's maximum page size (50) to minimise round-trips.
- * The queryFn fetches page 1, reads totalPages, then fires all remaining
- * pages in parallel — so a 130-farm registry needs just 3 requests.
- *
- * Use this wherever you need the complete farm list (e.g. the map sidebar).
- * Do NOT use it for the main paginated list view.
- */
+
 export function useAllFishFarms(
   baseParams: Omit<ListFishFarmsParams, 'pageNumber' | 'pageSize'> = {},
 ) {
-  const PAGE_SIZE = 50; // server-enforced maximum
+  const PAGE_SIZE = 50; 
 
   return useQuery({
     queryKey: [...fishFarmKeys.lists(), '__all__', baseParams] as const,
     queryFn: async () => {
-      // 1. Fetch page 1 to discover totalPages
+      
       const first = await listFishFarms({ ...baseParams, pageNumber: 1, pageSize: PAGE_SIZE });
 
       if (first.totalPages <= 1) return first.items;
 
-      // 2. Fetch remaining pages in parallel
+     
       const remaining = await Promise.all(
         Array.from({ length: first.totalPages - 1 }, (_, i) =>
           listFishFarms({ ...baseParams, pageNumber: i + 2, pageSize: PAGE_SIZE }),

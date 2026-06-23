@@ -5,107 +5,88 @@ import {
   keepPreviousData,
 } from '@tanstack/react-query';
 import {
-  listWorkers,
-  getWorker,
-  createWorker,
-  updateWorker,
-  updateWorkerPicture,
-  deleteWorker,
-  deleteWorkerPicture,
+  listFarmWorkers,
+  getFarmWorker,
+  assignPersonToFarm,
+  updateFarmWorkerRole,
+  removeFarmWorker,
 } from '../api/workers';
-import type { ListWorkersParams } from '../api/workers';
+import type { ListFarmWorkersParams } from '../api/workers';
 import { fishFarmKeys } from './useFishFarms';
-import type { CreateWorkerBody, UpdateWorkerBody } from '../types';
+import { personKeys } from './usePeople';
+import type { AssignPersonToFarmRequest, UpdateFarmWorkerRequest } from '../types';
 
-export const workerKeys = {
-  all: ['workers'] as const,
-  lists: () => [...workerKeys.all, 'list'] as const,
-  list: (farmId: string, params: ListWorkersParams) =>
-    [...workerKeys.lists(), farmId, params] as const,
-  details: () => [...workerKeys.all, 'detail'] as const,
-  detail: (farmId: string, workerId: string) =>
-    [...workerKeys.details(), farmId, workerId] as const,
+export const farmWorkerKeys = {
+  all: ['farmWorkers'] as const,
+  lists: () => [...farmWorkerKeys.all, 'list'] as const,
+  list: (farmId: string, params: ListFarmWorkersParams) =>
+    [...farmWorkerKeys.lists(), farmId, params] as const,
+  details: () => [...farmWorkerKeys.all, 'detail'] as const,
+  detail: (farmId: string, farmWorkerId: string) =>
+    [...farmWorkerKeys.details(), farmId, farmWorkerId] as const,
 };
 
-export function useWorkers(farmId: string, params: ListWorkersParams = {}) {
+export function useFarmWorkers(
+  farmId: string,
+  params: ListFarmWorkersParams = {},
+) {
   return useQuery({
-    queryKey: workerKeys.list(farmId, params),
-    queryFn: () => listWorkers(farmId, params),
+    queryKey: farmWorkerKeys.list(farmId, params),
+    queryFn: () => listFarmWorkers(farmId, params),
     enabled: Boolean(farmId),
     placeholderData: keepPreviousData,
   });
 }
 
-export function useWorker(farmId: string, workerId: string) {
+export function useFarmWorker(farmId: string, farmWorkerId: string) {
   return useQuery({
-    queryKey: workerKeys.detail(farmId, workerId),
-    queryFn: () => getWorker(farmId, workerId),
-    enabled: Boolean(farmId) && Boolean(workerId),
+    queryKey: farmWorkerKeys.detail(farmId, farmWorkerId),
+    queryFn: () => getFarmWorker(farmId, farmWorkerId),
+    enabled: Boolean(farmId) && Boolean(farmWorkerId),
   });
 }
 
-export function useCreateWorker(farmId: string) {
+export function useAssignPersonToFarm(farmId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: CreateWorkerBody) => createWorker(farmId, body),
+    mutationFn: (body: AssignPersonToFarmRequest) =>
+      assignPersonToFarm(farmId, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: workerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: farmWorkerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(farmId) });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: personKeys.all });
     },
   });
 }
 
-export function useUpdateWorker(farmId: string, workerId: string) {
+export function useUpdateFarmWorkerRole(
+  farmId: string,
+  farmWorkerId: string,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: UpdateWorkerBody) =>
-      updateWorker(farmId, workerId, body),
+    mutationFn: (body: UpdateFarmWorkerRequest) =>
+      updateFarmWorkerRole(farmId, farmWorkerId, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: workerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: farmWorkerKeys.lists() });
       queryClient.invalidateQueries({
-        queryKey: workerKeys.detail(farmId, workerId),
+        queryKey: farmWorkerKeys.detail(farmId, farmWorkerId),
       });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(farmId) });
     },
   });
 }
 
-export function useUpdateWorkerPicture(farmId: string, workerId: string) {
+export function useRemoveFarmWorker(farmId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (picture: File) =>
-      updateWorkerPicture(farmId, workerId, picture),
+    mutationFn: (farmWorkerId: string) => removeFarmWorker(farmId, farmWorkerId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(farmId) });
-      queryClient.invalidateQueries({
-        queryKey: workerKeys.detail(farmId, workerId),
-      });
-    },
-  });
-}
-
-export function useDeleteWorkerPicture(farmId: string, workerId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => deleteWorkerPicture(farmId, workerId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(farmId) });
-      queryClient.invalidateQueries({
-        queryKey: workerKeys.detail(farmId, workerId),
-      });
-    },
-  });
-}
-
-export function useDeleteWorker(farmId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (workerId: string) => deleteWorker(farmId, workerId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: workerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: farmWorkerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(farmId) });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: personKeys.all });
     },
   });
 }

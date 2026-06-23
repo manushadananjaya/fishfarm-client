@@ -77,9 +77,8 @@ function Pill({
 
 // ── Position badge ─────────────────────────────────────────────────────────
 
-const POSITION_CONFIGS: Record<WorkerPosition, PillConfig & { icon: string; label: string }> = {
+const POSITION_CONFIGS: Record<WorkerPosition, PillConfig & { label: string }> = {
   CEO: {
-    icon: '★',
     label: 'CEO',
     dot: '#B45309',
     text: '#92400E',
@@ -87,7 +86,6 @@ const POSITION_CONFIGS: Record<WorkerPosition, PillConfig & { icon: string; labe
     border: '#FDE68A',
   },
   Captain: {
-    icon: '⚓',
     label: 'Captain',
     dot: '#1D4ED8',
     text: '#1E40AF',
@@ -95,7 +93,6 @@ const POSITION_CONFIGS: Record<WorkerPosition, PillConfig & { icon: string; labe
     border: '#BFDBFE',
   },
   Worker: {
-    icon: '◆',
     label: 'Worker',
     dot: '#15803D',
     text: '#166534',
@@ -112,7 +109,7 @@ interface PositionChipProps {
 
 export function PositionChip({ position, size = 'sm' }: PositionChipProps) {
   const cfg = POSITION_CONFIGS[position];
-  return <Pill icon={cfg.icon} label={cfg.label} config={cfg} size={size} />;
+  return <Pill label={cfg.label} config={cfg} size={size} />;
 }
 
 // ── Certification badge ────────────────────────────────────────────────────

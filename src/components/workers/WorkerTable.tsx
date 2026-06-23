@@ -20,17 +20,18 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import type { Worker } from '../../types';
+import type { FarmWorkerDto } from '../../types';
 import { PositionChip, CertificationChip } from '../common/StatusChip';
 import { formatDate, formatAge } from '../../utils/formatters';
 
 interface WorkerTableProps {
-  workers: Worker[];
+  workers: FarmWorkerDto[];
   loading?: boolean;
-  onEdit?: (worker: Worker) => void;
-  onDelete?: (worker: Worker) => void;
+  /** Open role-change dialog for this assignment */
+  onEdit?: (worker: FarmWorkerDto) => void;
+  /** Remove assignment */
+  onDelete?: (worker: FarmWorkerDto) => void;
   readOnly?: boolean;
-  farmId?: string;
 }
 
 export default function WorkerTable({
@@ -39,9 +40,9 @@ export default function WorkerTable({
   onEdit,
   onDelete,
   readOnly = false,
-  farmId,
 }: WorkerTableProps) {
   const navigate = useNavigate();
+
   if (loading) {
     return (
       <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
@@ -82,7 +83,7 @@ export default function WorkerTable({
       >
         <PersonIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
         <Typography color="text.secondary" variant="body2">
-          No workers registered yet
+          No workers assigned yet
         </Typography>
       </Box>
     );
@@ -103,22 +104,23 @@ export default function WorkerTable({
           {workers.map((worker) => (
             <TableRow
               key={worker.id}
-              onClick={() =>
-                farmId && navigate(`/farms/${farmId}/workers/${worker.id}`)
-              }
+              onClick={() => navigate(`/people/${worker.personId}`)}
               sx={{
                 opacity: worker.isExpired ? 0.75 : 1,
                 bgcolor: worker.isExpired
                   ? (theme) => alpha(theme.palette.error.main, 0.03)
                   : undefined,
-                cursor: farmId ? 'pointer' : 'default',
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
+                },
               }}
             >
               {/* Avatar */}
               <TableCell sx={{ width: 52, pr: 0 }}>
                 <Avatar
                   src={worker.pictureUrl ?? undefined}
-                  alt={worker.name}
+                  alt={worker.personName}
                   sx={{
                     width: 36,
                     height: 36,
@@ -130,7 +132,7 @@ export default function WorkerTable({
                       }`,
                   }}
                 >
-                  {worker.name.charAt(0).toUpperCase()}
+                  {worker.personName.charAt(0).toUpperCase()}
                 </Avatar>
               </TableCell>
 
@@ -138,20 +140,27 @@ export default function WorkerTable({
               <TableCell>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" fontWeight={600}>
-                    {worker.name}
+                    {worker.personName}
                   </Typography>
-                  {farmId && (
-                    <OpenInNewIcon
-                      sx={{ fontSize: 13, color: 'text.disabled', opacity: 0, '.MuiTableRow-root:hover &': { opacity: 1 }, transition: 'opacity 0.15s' }}
-                    />
-                  )}
+                  <OpenInNewIcon
+                    sx={{
+                      fontSize: 13,
+                      color: 'text.disabled',
+                      opacity: 0,
+                      '.MuiTableRow-root:hover &': { opacity: 1 },
+                      transition: 'opacity 0.15s',
+                    }}
+                  />
                 </Box>
               </TableCell>
 
-              {/* Code */}
+              {/* Person code */}
               <TableCell>
-                <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.secondary' }}>
-                  {worker.workerCode}
+                <Typography
+                  variant="body2"
+                  sx={{ fontFamily: 'monospace', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  {worker.personCode}
                 </Typography>
               </TableCell>
 
@@ -163,7 +172,7 @@ export default function WorkerTable({
               {/* Age */}
               <TableCell>
                 <Typography variant="body2" color="text.secondary">
-                  {formatAge(worker.age)}
+                  {formatAge(worker.personAge)}
                 </Typography>
               </TableCell>
 
@@ -181,14 +190,18 @@ export default function WorkerTable({
                       maxWidth: 200,
                     }}
                   >
-                    {worker.email}
+                    {worker.personEmail}
                   </Typography>
                 </Box>
               </TableCell>
 
               {/* Certified Until */}
               <TableCell>
-                <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                >
                   {formatDate(worker.certifiedUntil)}
                 </Typography>
               </TableCell>
@@ -209,7 +222,7 @@ export default function WorkerTable({
                   onClick={(e) => e.stopPropagation()}
                 >
                   {onEdit && (
-                    <Tooltip title="Edit worker">
+                    <Tooltip title="Change role">
                       <IconButton
                         size="small"
                         onClick={() => onEdit(worker)}
@@ -220,7 +233,7 @@ export default function WorkerTable({
                     </Tooltip>
                   )}
                   {onDelete && (
-                    <Tooltip title="Remove worker">
+                    <Tooltip title="Remove from this farm">
                       <IconButton
                         size="small"
                         onClick={() => onDelete(worker)}
@@ -245,7 +258,7 @@ function WorkerTableHead({ showActions }: { showActions: boolean }) {
     <TableRow>
       <TableCell />
       <TableCell>Name</TableCell>
-      <TableCell>ID</TableCell>
+      <TableCell>Code</TableCell>
       <TableCell>Position</TableCell>
       <TableCell>Age</TableCell>
       <TableCell>Email</TableCell>

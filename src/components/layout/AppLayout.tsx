@@ -24,6 +24,7 @@ import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import CloseIcon from '@mui/icons-material/Close';
 import WavesIcon from '@mui/icons-material/Waves';
 import MapIcon from '@mui/icons-material/Map';
+import PeopleIcon from '@mui/icons-material/People';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ interface AppLayoutProps {
 
 const NAV_ITEMS = [
   { label: 'Fish Farms', path: '/', icon: <HomeIcon /> },
+  { label: 'People', path: '/people', icon: <PeopleIcon /> },
   { label: 'Map', path: '/map', icon: <MapIcon /> },
   { label: 'Register Farm', path: '/farms/new', icon: <AddBusinessIcon /> },
 ];

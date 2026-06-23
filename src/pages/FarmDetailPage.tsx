@@ -34,14 +34,14 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 
 import { useFishFarm, useDeleteFishFarm } from '../hooks/useFishFarms';
-import { useWorkers, useDeleteWorker } from '../hooks/useWorkers';
+import { useFarmWorkers, useRemoveFarmWorker } from '../hooks/useWorkers';
 import { useDebounce } from '../hooks/useDebounce';
-import type { WorkerPosition } from '../types';
+import type { WorkerPosition, FarmWorkerDto } from '../types';
 import WorkerTable from '../components/workers/WorkerTable';
-import WorkerFormDialog from '../components/workers/WorkerFormDialog';
+import AssignWorkerDialog from '../components/people/AssignWorkerDialog';
+import ChangeRoleDialog from '../components/workers/ChangeRoleDialog';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import GpsMapPicker from '../components/farms/GpsMapPicker';
-import type { Worker } from '../types';
 import { formatDateTime, formatGps } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
 
@@ -52,15 +52,15 @@ export default function FarmDetailPage() {
 
   const { data: farm, isLoading, isError } = useFishFarm(id!);
 
-  const deleteFarm = useDeleteFishFarm();
-  const deleteWorker = useDeleteWorker(id!);
+  const deleteFarm        = useDeleteFishFarm();
+  const removeFarmWorker  = useRemoveFarmWorker(id!);
 
   // Worker filter state
-  const [workerSearch, setWorkerSearch] = useState('');
-  const [workerPosition, setWorkerPosition] = useState<WorkerPosition | 'all'>('all');
-  const [certFilter, setCertFilter] = useState<'all' | 'valid' | 'expired'>('all');
-  const [workerPage, setWorkerPage] = useState(1);
-  const debouncedWorkerSearch = useDebounce(workerSearch, 350);
+  const [workerSearch, setWorkerSearch]       = useState('');
+  const [workerPosition, setWorkerPosition]   = useState<WorkerPosition | 'all'>('all');
+  const [certFilter, setCertFilter]           = useState<'all' | 'valid' | 'expired'>('all');
+  const [workerPage, setWorkerPage]           = useState(1);
+  const debouncedWorkerSearch                 = useDebounce(workerSearch, 350);
 
   const workerQueryParams = {
     pageNumber: workerPage,
@@ -74,12 +74,12 @@ export default function FarmDetailPage() {
   const {
     data: workersData,
     isLoading: workersLoading,
-  } = useWorkers(id!, workerQueryParams);
+  } = useFarmWorkers(id!, workerQueryParams);
 
-  const [workerDialogOpen, setWorkerDialogOpen] = useState(false);
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
-  const [deleteFarmDialog, setDeleteFarmDialog] = useState(false);
-  const [deleteWorkerDialog, setDeleteWorkerDialog] = useState<Worker | null>(null);
+  const [assignDialogOpen, setAssignDialogOpen]       = useState(false);
+  const [changeRoleWorker, setChangeRoleWorker]       = useState<FarmWorkerDto | null>(null);
+  const [deleteFarmDialog, setDeleteFarmDialog]       = useState(false);
+  const [deleteWorkerDialog, setDeleteWorkerDialog]   = useState<FarmWorkerDto | null>(null);
 
   const hasCeo = farm?.workers.some((w) => w.position === 'CEO') ?? false;
 
@@ -90,21 +90,11 @@ export default function FarmDetailPage() {
     navigate('/');
   };
 
-  const handleDeleteWorker = async () => {
-    if (!deleteWorkerDialog || !farm) return;
-    await deleteWorker.mutateAsync(deleteWorkerDialog.id);
-    enqueueSnackbar(`${deleteWorkerDialog.name} removed`, { variant: 'info' });
+  const handleRemoveWorker = async () => {
+    if (!deleteWorkerDialog) return;
+    await removeFarmWorker.mutateAsync(deleteWorkerDialog.id);
+    enqueueSnackbar(`${deleteWorkerDialog.personName} removed from this farm`, { variant: 'info' });
     setDeleteWorkerDialog(null);
-  };
-
-  const openEditWorker = (worker: Worker) => {
-    setSelectedWorker(worker);
-    setWorkerDialogOpen(true);
-  };
-
-  const openAddWorker = () => {
-    setSelectedWorker(null);
-    setWorkerDialogOpen(true);
   };
 
   if (isError) {
@@ -479,8 +469,8 @@ export default function FarmDetailPage() {
               </Typography>
             )}
           </Box>
-          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={openAddWorker} size="small">
-            Add Worker
+          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setAssignDialogOpen(true)} size="small">
+            Assign Worker
           </Button>
         </Box>
 
@@ -543,9 +533,8 @@ export default function FarmDetailPage() {
         <WorkerTable
           workers={workersData?.items ?? []}
           loading={workersLoading}
-          onEdit={openEditWorker}
+          onEdit={(w) => setChangeRoleWorker(w)}
           onDelete={(w) => setDeleteWorkerDialog(w)}
-          farmId={id}
         />
 
         {/* Worker pagination */}
@@ -564,11 +553,11 @@ export default function FarmDetailPage() {
         )}
       </Paper>
 
-      {/* Floating Add Worker Button (mobile) */}
+      {/* Floating Assign Worker Button (mobile) */}
       <Fab
         color="primary"
-        aria-label="Add worker"
-        onClick={openAddWorker}
+        aria-label="Assign worker"
+        onClick={() => setAssignDialogOpen(true)}
         sx={{
           position: 'fixed',
           bottom: 24,
@@ -579,15 +568,23 @@ export default function FarmDetailPage() {
         <PersonAddIcon />
       </Fab>
 
-      {/* Worker Form Dialog */}
-      <WorkerFormDialog
-        open={workerDialogOpen}
-        onClose={() => {
-          setWorkerDialogOpen(false);
-          setSelectedWorker(null);
-        }}
+      {/* Assign Worker Dialog */}
+      {farm && (
+        <AssignWorkerDialog
+          open={assignDialogOpen}
+          onClose={() => setAssignDialogOpen(false)}
+          farmId={id!}
+          farmName={farm.name}
+          assignedWorkers={farm.workers}
+        />
+      )}
+
+      {/* Change Role Dialog */}
+      <ChangeRoleDialog
+        open={Boolean(changeRoleWorker)}
+        onClose={() => setChangeRoleWorker(null)}
         farmId={id!}
-        worker={selectedWorker}
+        worker={changeRoleWorker}
         hasCeo={hasCeo}
       />
 
@@ -595,7 +592,7 @@ export default function FarmDetailPage() {
       <ConfirmDialog
         open={deleteFarmDialog}
         title="Delete Fish Farm"
-        message={`Are you sure you want to delete "${farm?.name}"? This will also permanently remove all ${farm?.workers.length ?? 0} worker records. This cannot be undone.`}
+        message={`Are you sure you want to delete "${farm?.name}"? All worker assignments will be removed. This cannot be undone.`}
         confirmLabel="Delete Farm"
         danger
         loading={deleteFarm.isPending}
@@ -603,15 +600,15 @@ export default function FarmDetailPage() {
         onCancel={() => setDeleteFarmDialog(false)}
       />
 
-      {/* Delete Worker Confirm */}
+      {/* Remove Worker Confirm */}
       <ConfirmDialog
         open={Boolean(deleteWorkerDialog)}
         title="Remove Worker"
-        message={`Remove "${deleteWorkerDialog?.name}" from this farm?`}
+        message={`Remove "${deleteWorkerDialog?.personName}" from this farm? Their global profile will not be affected.`}
         confirmLabel="Remove"
         danger
-        loading={deleteWorker.isPending}
-        onConfirm={handleDeleteWorker}
+        loading={removeFarmWorker.isPending}
+        onConfirm={handleRemoveWorker}
         onCancel={() => setDeleteWorkerDialog(null)}
       />
     </Box>

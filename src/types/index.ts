@@ -1,4 +1,13 @@
+// ── Shared ────────────────────────────────────────────────────────────────
+
 export type WorkerPosition = 'CEO' | 'Worker' | 'Captain';
+
+/** Numeric position used in POST/PUT assignment requests */
+export type PositionNumber = 1 | 2 | 3; // 1=CEO  2=Worker  3=Captain
+
+export const POSITION_TO_NUMBER: Record<WorkerPosition, PositionNumber> = {
+  CEO: 1, Worker: 2, Captain: 3,
+};
 
 export interface PaginatedResult<T> {
   items: T[];
@@ -9,6 +18,8 @@ export interface PaginatedResult<T> {
   hasPreviousPage: boolean;
   hasNextPage: boolean;
 }
+
+// ── Fish Farm ──────────────────────────────────────────────────────────────
 
 export interface FishFarmSummary {
   id: string;
@@ -35,22 +46,7 @@ export interface FishFarm {
   pictureUrl: string | null;
   createdAt: string;
   updatedAt: string;
-  workers: Worker[];
-}
-
-export interface Worker {
-  id: string;
-  workerCode: string;
-  fishFarmId: string;
-  name: string;
-  age: number;
-  email: string;
-  position: WorkerPosition;
-  certifiedUntil: string;
-  isExpired: boolean;
-  pictureUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
+  workers: FarmWorkerDto[];   // ← was Worker[], now FarmWorkerDto[]
 }
 
 export interface CreateFishFarmBody {
@@ -70,30 +66,78 @@ export interface UpdateFishFarmBody {
   hasBarge: boolean;
 }
 
-export interface CreateWorkerBody {
+// ── People (global profiles) ───────────────────────────────────────────────
+
+export interface PersonSummaryDto {
+  id: string;
+  personCode: string;
   name: string;
-  age: number;
   email: string;
+  age: number;
+  certifiedUntil: string;
+  isExpired: boolean;
+  pictureUrl: string | null;
+  farmCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonFarmAssignmentDto {
+  farmWorkerId: string;
+  fishFarmId: string;
+  farmName: string;
+  farmCode: string;
   position: WorkerPosition;
+}
+
+export interface PersonDto extends PersonSummaryDto {
+  assignments: PersonFarmAssignmentDto[];
+}
+
+export interface CreatePersonRequest {
+  name: string;
+  email: string;
+  age: number;
   certifiedUntil: string;
   picture?: File;
 }
 
-export interface UpdateWorkerBody {
+export interface UpdatePersonRequest {
   name: string;
-  age: number;
   email: string;
-  position: WorkerPosition;
+  age: number;
   certifiedUntil: string;
 }
 
-export interface ProblemDetails {
-  title: string;
-  status: number;
-  detail: string;
-  instance?: string;
-  errors?: Record<string, string[]>;
+// ── Farm Worker Assignments (junction: person ↔ farm + role) ──────────────
+
+export interface FarmWorkerDto {
+  id: string;
+  fishFarmId: string;
+  personId: string;
+  personCode: string;
+  personName: string;
+  personEmail: string;
+  personAge: number;
+  certifiedUntil: string;
+  isExpired: boolean;
+  pictureUrl: string | null;
+  position: WorkerPosition;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface AssignPersonToFarmRequest {
+  personId: string;
+  position: PositionNumber;
+}
+
+export interface UpdateFarmWorkerRequest {
+  position: PositionNumber;
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────
+
 
 export interface FishFarmMapDto {
   id: string;
@@ -101,6 +145,12 @@ export interface FishFarmMapDto {
   name: string;
   gpsLatitude: number;
   gpsLongitude: number;
+  numberOfCages: number;
+  hasBarge: boolean;
+  pictureUrl: string | null;
+  createdAt: string;    // ISO 8601 UTC
+  updatedAt: string;    // ISO 8601 UTC
+  workerCount: number;
 }
 
 export interface FishFarmMapParams {
@@ -108,6 +158,16 @@ export interface FishFarmMapParams {
   south?: number;
   east?: number;
   west?: number;
+}
+
+// ── Generic responses ─────────────────────────────────────────────────────
+
+export interface ProblemDetails {
+  title: string;
+  status: number;
+  detail: string;
+  instance?: string;
+  errors?: Record<string, string[]>;
 }
 
 export interface CreateIdResponse {

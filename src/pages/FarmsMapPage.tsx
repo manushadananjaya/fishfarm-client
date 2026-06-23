@@ -26,10 +26,10 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import GridViewIcon from '@mui/icons-material/GridView';
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import GroupIcon from '@mui/icons-material/Group';
-import { useFishFarmsMap, useAllFishFarms } from '../hooks/useFishFarms';
+import { useFishFarmsMap } from '../hooks/useFishFarms';
 import FarmsOverviewMap, { type FarmsOverviewMapHandle } from '../components/farms/FarmsOverviewMap';
 import FarmQuickViewModal from '../components/farms/FarmQuickViewModal';
-import type { FishFarmSummary } from '../types';
+import type { FishFarmMapDto } from '../types';
 
 const FARM_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23003D7A' opacity='0.1'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23003D7A' opacity='0.28' font-size='28'%3E🐟%3C/text%3E%3C/svg%3E`;
 
@@ -43,29 +43,11 @@ const glassBase = {
 };
 
 export default function FarmsMapPage() {
-  // Map markers (GPS-optimised endpoint)
-  const { data: mapFarms = [], isLoading: mapLoading, isError: mapError } = useFishFarmsMap();
-
-  // Complete farm list for sidebar — all pages fetched and merged.
-  // Sorted by name so the sidebar list is stable regardless of total count.
-  const { data: allFarms = [], isLoading: listLoading } = useAllFishFarms({
-    sortBy: 'name',
-    sortDir: 'asc',
-  });
-
-  // Merge: attach farmCode from map endpoint to list items
-  const farmCodeById = useMemo(
-    () => new Map(mapFarms.map((f) => [f.id, f.farmCode])),
-    [mapFarms],
-  );
-  const sidebarFarms: (FishFarmSummary & { farmCode: string })[] = useMemo(
-    () => allFarms.map((f) => ({ ...f, farmCode: farmCodeById.get(f.id) ?? '' })),
-    [allFarms, farmCodeById],
-  );
+  const { data: mapFarms = [], isLoading, isError } = useFishFarmsMap();
 
   // UI state
   const mapRef = useRef<FarmsOverviewMapHandle>(null);
-  const [selectedFarmId, setSelectedFarmId]   = useState<string | null>(null);
+  const [selectedFarm, setSelectedFarm]       = useState<FishFarmMapDto | null>(null);
   const [highlightedId, setHighlightedId]     = useState<string | null>(null);
   const [visibleIds, setVisibleIds]           = useState<Set<string>>(new Set());
   const [fitTrigger, setFitTrigger]           = useState(0);
@@ -74,30 +56,40 @@ export default function FarmsMapPage() {
 
   const handleVisibleChange = useCallback((ids: Set<string>) => setVisibleIds(ids), []);
 
-  /** Sidebar row click: fly map to that farm, highlight marker, open modal */
+  const farmById = useMemo(
+    () => new Map(mapFarms.map((f) => [f.id, f])),
+    [mapFarms],
+  );
+
+  const handleMarkerClick = useCallback(
+    (id: string) => {
+      const farm = farmById.get(id) ?? null;
+      setSelectedFarm(farm);
+      setHighlightedId(id);
+    },
+    [farmById],
+  );
+
   const handleSidebarSelect = useCallback(
     (id: string) => {
-      const mapFarm = mapFarms.find((f) => f.id === id);
-      if (mapFarm) {
-        mapRef.current?.flyTo(mapFarm.gpsLatitude, mapFarm.gpsLongitude, 10);
+      const farm = farmById.get(id);
+      if (farm) {
+        mapRef.current?.flyTo(farm.gpsLatitude, farm.gpsLongitude, 10);
+        setSelectedFarm(farm);
+        setHighlightedId(id);
+        setMobileOpen(false);
       }
-      setHighlightedId(id);
-      setSelectedFarmId(id);
-      setMobileOpen(false);
     },
-    [mapFarms],
+    [farmById],
   );
 
   const filteredSidebar = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return sidebarFarms;
-    return sidebarFarms.filter(
+    if (!q) return mapFarms;
+    return mapFarms.filter(
       (f) => f.name.toLowerCase().includes(q) || f.farmCode.toLowerCase().includes(q),
     );
-  }, [sidebarFarms, search]);
-
-  const sidebarLoading = mapLoading || listLoading;
-  const isLoading      = mapLoading;
+  }, [mapFarms, search]);
 
   return (
     <Box
@@ -115,7 +107,7 @@ export default function FarmsMapPage() {
           farms={mapFarms}
           fitTrigger={fitTrigger}
           highlightedId={highlightedId}
-          onMarkerClick={setSelectedFarmId}
+          onMarkerClick={handleMarkerClick}
           onVisibleChange={handleVisibleChange}
         />
       </Box>
@@ -139,7 +131,11 @@ export default function FarmsMapPage() {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
           <LocationOnIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-          <Typography variant="overline" color="primary" sx={{ fontSize: '0.65rem', letterSpacing: '0.12em', fontWeight: 700, lineHeight: 1 }}>
+          <Typography
+            variant="overline"
+            color="primary"
+            sx={{ fontSize: '0.65rem', letterSpacing: '0.12em', fontWeight: 700, lineHeight: 1 }}
+          >
             Norwegian Fish Farm Registry
           </Typography>
         </Box>
@@ -179,7 +175,7 @@ export default function FarmsMapPage() {
         )}
       </Box>
 
-      {/* ── Fit-all button (top-left below info card) ───────────────────── */}
+      {/* ── Fit-all button ───────────────────────────────────────────────── */}
       <Tooltip title="Fit all farms in view" placement="right">
         <Box
           onClick={() => setFitTrigger((n) => n + 1)}
@@ -209,17 +205,24 @@ export default function FarmsMapPage() {
         </Box>
       </Tooltip>
 
-      {/* ── Error banner ────────────────────────────────────────────────── */}
-      {mapError && (
+      {/* ── Error banner ─────────────────────────────────────────────────── */}
+      {isError && (
         <Alert
           severity="error"
-          sx={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1001, maxWidth: 400 }}
+          sx={{
+            position: 'absolute',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1001,
+            maxWidth: 400,
+          }}
         >
           Failed to load farm locations.
         </Alert>
       )}
 
-      {/* ── DESKTOP glass sidebar ───────────────────────────────────────── */}
+      {/* ── DESKTOP glass sidebar ────────────────────────────────────────── */}
       <Paper
         elevation={0}
         sx={{
@@ -241,8 +244,8 @@ export default function FarmsMapPage() {
       >
         <SidebarContent
           farms={filteredSidebar}
-          allCount={sidebarFarms.length}
-          loading={sidebarLoading}
+          allCount={mapFarms.length}
+          loading={isLoading}
           search={search}
           onSearchChange={setSearch}
           highlightedId={highlightedId}
@@ -251,7 +254,7 @@ export default function FarmsMapPage() {
         />
       </Paper>
 
-      {/* ── MOBILE: FAB to open bottom sheet ─────────────────────────────── */}
+      {/* ── MOBILE: FAB ──────────────────────────────────────────────────── */}
       <Fab
         variant="extended"
         size="medium"
@@ -277,7 +280,7 @@ export default function FarmsMapPage() {
         {mapFarms.length} Farms
       </Fab>
 
-      {/* ── MOBILE: bottom sheet drawer ─────────────────────────────────── */}
+      {/* ── MOBILE: bottom sheet drawer ──────────────────────────────────── */}
       <Drawer
         anchor="bottom"
         open={mobileOpen}
@@ -332,7 +335,7 @@ export default function FarmsMapPage() {
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
           <SidebarFarmList
             farms={filteredSidebar}
-            loading={sidebarLoading}
+            loading={isLoading}
             highlightedId={highlightedId}
             onHover={setHighlightedId}
             onSelect={handleSidebarSelect}
@@ -341,22 +344,21 @@ export default function FarmsMapPage() {
 
         <Box sx={{ px: 2, py: 1, borderTop: (t) => `1px solid ${t.palette.divider}` }}>
           <Typography variant="caption" color="text.disabled">
-            {filteredSidebar.length} of {sidebarFarms.length} farm{sidebarFarms.length !== 1 ? 's' : ''}
+            {filteredSidebar.length} of {mapFarms.length} farm{mapFarms.length !== 1 ? 's' : ''}
             {search && ' matched'}
           </Typography>
         </Box>
       </Drawer>
 
-      {/* ── Farm quick-view modal ────────────────────────────────────────── */}
+      {/* ── Farm quick-view modal — data from map array, no extra fetch ───── */}
       <FarmQuickViewModal
-        farmId={selectedFarmId}
-        onClose={() => setSelectedFarmId(null)}
+        farm={selectedFarm}
+        onClose={() => { setSelectedFarm(null); setHighlightedId(null); }}
       />
     </Box>
   );
 }
 
-// ── Sidebar inner content (reused in desktop + mobile) ──────────────────────
 
 function SidebarContent({
   farms,
@@ -368,7 +370,7 @@ function SidebarContent({
   onHover,
   onSelect,
 }: {
-  farms: (FishFarmSummary & { farmCode: string })[];
+  farms: FishFarmMapDto[];
   allCount: number;
   loading: boolean;
   search: string;
@@ -472,7 +474,7 @@ function SidebarFarmList({
   onHover,
   onSelect,
 }: {
-  farms: (FishFarmSummary & { farmCode: string })[];
+  farms: FishFarmMapDto[];
   loading: boolean;
   highlightedId: string | null;
   onHover: (id: string | null) => void;
@@ -529,7 +531,7 @@ function FarmSidebarCard({
   onHover,
   onSelect,
 }: {
-  farm: FishFarmSummary & { farmCode: string };
+  farm: FishFarmMapDto;
   isHighlighted: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
@@ -560,7 +562,13 @@ function FarmSidebarCard({
         variant="rounded"
         src={farm.pictureUrl ?? FARM_PLACEHOLDER}
         alt={farm.name}
-        sx={{ width: 52, height: 52, borderRadius: 1.5, flexShrink: 0, border: (t) => `1px solid ${t.palette.divider}` }}
+        sx={{
+          width: 52,
+          height: 52,
+          borderRadius: 1.5,
+          flexShrink: 0,
+          border: (t) => `1px solid ${t.palette.divider}`,
+        }}
       />
 
       {/* Content */}
@@ -576,25 +584,23 @@ function FarmSidebarCard({
           >
             {farm.name}
           </Typography>
-          {farm.farmCode && (
-            <Box
-              sx={{
-                px: 0.7,
-                py: 0.15,
-                bgcolor: isHighlighted ? 'primary.main' : (t) => alpha(t.palette.primary.main, 0.1),
-                color: isHighlighted ? 'white' : 'primary.main',
-                borderRadius: '4px',
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                flexShrink: 0,
-                lineHeight: 1.6,
-                transition: 'background 0.15s, color 0.15s',
-              }}
-            >
-              {farm.farmCode}
-            </Box>
-          )}
+          <Box
+            sx={{
+              px: 0.7,
+              py: 0.15,
+              bgcolor: isHighlighted ? 'primary.main' : (t) => alpha(t.palette.primary.main, 0.1),
+              color: isHighlighted ? 'white' : 'primary.main',
+              borderRadius: '4px',
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              flexShrink: 0,
+              lineHeight: 1.6,
+              transition: 'background 0.15s, color 0.15s',
+            }}
+          >
+            {farm.farmCode}
+          </Box>
         </Box>
 
         {/* Stats row */}
