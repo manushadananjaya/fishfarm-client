@@ -23,6 +23,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import CloseIcon from '@mui/icons-material/Close';
 import WavesIcon from '@mui/icons-material/Waves';
+import MapIcon from '@mui/icons-material/Map';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ interface AppLayoutProps {
 
 const NAV_ITEMS = [
   { label: 'Fish Farms', path: '/', icon: <HomeIcon /> },
+  { label: 'Map', path: '/map', icon: <MapIcon /> },
   { label: 'Register Farm', path: '/farms/new', icon: <AddBusinessIcon /> },
 ];
 
@@ -169,28 +171,37 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </List>
       </Drawer>
 
-      {/* Main content */}
-      <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
-        <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      {/* Main content — full-bleed on /map, contained everywhere else */}
+      {location.pathname === '/map' ? (
+        <Box
+          component="main"
+          sx={{ flexGrow: 1, bgcolor: 'background.default', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+        >
           {children}
-        </Container>
-      </Box>
-
-      {/* Footer */}
-      <Box
-        component="footer"
-        sx={{
-          py: 2,
-          px: 3,
-          bgcolor: 'primary.dark',
-          color: 'rgba(255,255,255,0.6)',
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="caption">
-          © {new Date().getFullYear()} AquaManager — Norwegian Fish Farm Registry
-        </Typography>
-      </Box>
+        </Box>
+      ) : (
+        <>
+          <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
+            <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+              {children}
+            </Container>
+          </Box>
+          <Box
+            component="footer"
+            sx={{
+              py: 2,
+              px: 3,
+              bgcolor: 'primary.dark',
+              color: 'rgba(255,255,255,0.6)',
+              textAlign: 'center',
+            }}
+          >
+            <Typography variant="caption">
+              © {new Date().getFullYear()} AquaManager — Norwegian Fish Farm Registry
+            </Typography>
+          </Box>
+        </>
+      )}
     </Box>
   );
 }

@@ -399,7 +399,7 @@ export default function FarmListPage() {
                 <Box
                   key={i}
                   sx={{
-                    height: 100,
+                    height: { xs: 120, sm: 132 },
                     borderRadius: 2.5,
                     border: (theme) => `1px solid ${theme.palette.divider}`,
                     bgcolor: 'background.paper',
@@ -407,7 +407,7 @@ export default function FarmListPage() {
                     overflow: 'hidden',
                   }}
                 >
-                  <Box sx={{ width: 120, height: '100%', bgcolor: 'action.hover', flexShrink: 0 }} />
+                  <Box sx={{ width: { xs: 96, sm: 120 }, height: '100%', bgcolor: 'action.hover', flexShrink: 0 }} />
                   <Box sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <Box sx={{ height: 18, width: '45%', bgcolor: 'action.hover', borderRadius: 1 }} />
                     <Box sx={{ height: 13, width: '60%', bgcolor: 'action.hover', borderRadius: 1 }} />

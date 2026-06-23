@@ -7,6 +7,7 @@ import {
 import {
   listFishFarms,
   getFishFarm,
+  getFishFarmsMap,
   createFishFarm,
   updateFishFarm,
   updateFishFarmPicture,
@@ -14,6 +15,7 @@ import {
   deleteFishFarmPicture,
 } from '../api/fishFarms';
 import type { ListFishFarmsParams } from '../api/fishFarms';
+import type { FishFarmMapParams } from '../types';
 import type { CreateFishFarmBody, UpdateFishFarmBody } from '../types';
 
 export const fishFarmKeys = {
@@ -23,6 +25,7 @@ export const fishFarmKeys = {
     [...fishFarmKeys.lists(), params] as const,
   details: () => [...fishFarmKeys.all, 'detail'] as const,
   detail: (id: string) => [...fishFarmKeys.details(), id] as const,
+  map: (params: FishFarmMapParams) => [...fishFarmKeys.all, 'map', params] as const,
 };
 
 export function useFishFarms(params: ListFishFarmsParams = {}) {
@@ -81,6 +84,14 @@ export function useDeleteFishFarmPicture(id: string) {
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: fishFarmKeys.lists() });
     },
+  });
+}
+
+export function useFishFarmsMap(params: FishFarmMapParams = {}) {
+  return useQuery({
+    queryKey: fishFarmKeys.map(params),
+    queryFn: () => getFishFarmsMap(params),
+    staleTime: 60_000,
   });
 }
 

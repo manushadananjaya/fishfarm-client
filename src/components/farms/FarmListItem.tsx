@@ -47,6 +47,7 @@ export default function FarmListItem({ farm }: FarmListItemProps) {
       onClick={() => navigate(`/farms/${farm.id}`)}
       sx={{
         display: 'flex',
+        height: { xs: 120, sm: 132 },
         width: '100%',
         borderRadius: 2.5,
         border: (theme) => `1px solid ${theme.palette.divider}`,

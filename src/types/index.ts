@@ -95,6 +95,21 @@ export interface ProblemDetails {
   errors?: Record<string, string[]>;
 }
 
+export interface FishFarmMapDto {
+  id: string;
+  farmCode: string;
+  name: string;
+  gpsLatitude: number;
+  gpsLongitude: number;
+}
+
+export interface FishFarmMapParams {
+  north?: number;
+  south?: number;
+  east?: number;
+  west?: number;
+}
+
 export interface CreateIdResponse {
   id: string;
 }

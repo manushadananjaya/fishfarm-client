@@ -3,6 +3,8 @@ import type {
   PaginatedResult,
   FishFarmSummary,
   FishFarm,
+  FishFarmMapDto,
+  FishFarmMapParams,
   CreateFishFarmBody,
   UpdateFishFarmBody,
   CreateIdResponse,
@@ -82,4 +84,11 @@ export async function deleteFishFarm(id: string): Promise<void> {
 
 export async function deleteFishFarmPicture(id: string): Promise<void> {
   await apiClient.delete(`/api/fishfarms/${id}/picture`);
+}
+
+export async function getFishFarmsMap(
+  params: FishFarmMapParams = {},
+): Promise<FishFarmMapDto[]> {
+  const { data } = await apiClient.get<FishFarmMapDto[]>('/api/fishfarms/map', { params });
+  return data;
 }
